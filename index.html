@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+</head>
+<body>
+  <h2>Inside iFrame</h2>
+
+  <button id="openPopupBtn">Open Popup</button>
+  <p id="messageDisplay">Message from Popup: </p>
+
+  <p id="user-login-email"></p>
+
+  <script>
+    window.alert('Hello from IFrame');
+  </script>
+
+
+
+  <script>
+    // Function to open a popup window
+    function openPopup() {
+        const popup = window.open(
+            'about:blank',
+            'popupWindow',
+            'width=400,height=300'
+        );
+
+        // Load the popup's HTML
+        popup.document.write(`
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <title>Popup Window</title>
+            </head>
+            <body>
+                <button id="sendMessageBtn">Send Message to Parent</button>
+
+                <script>
+                    // Function to send a message to the parent window
+                    function sendMessageToParent() {
+                        console.log("~~~ sendMessageToParent");
+                        window.opener.postMessage({user: {email: 'test@example.com'}}, '*');
+                    }
+
+                    // Add event listener to the button in the popup
+                    document.getElementById('sendMessageBtn').addEventListener('click', sendMessageToParent);
+                <\/script>
+            </body>
+            </html>
+        `);
+    }
+
+    // Function to handle the message received from the popup
+    function handleMessage(event) {
+      console.log("~~~ getMessageFromChild", event);
+
+        // if (event.origin === window.location.origin) {
+        if(event.data && event.data.user) {
+          localStorage.setItem('auth', JSON.stringify(event.data));
+          document.getElementById('user-login-email').textContent = event.data.user.email;
+        }
+        // }
+    }
+
+    // Add event listener to the button in the parent window
+    document.getElementById('openPopupBtn').addEventListener('click', openPopup);
+
+    // Add event listener to receive messages from the popup
+    window.addEventListener('message', handleMessage);
+
+    window.addEventListener("load", (event) => {
+      console.log("~~~ window.load");
+
+      if(localStorage.getItem("auth")) {
+        console.log("~~~ loading user auth");
+        document.getElementById('user-login-email').textContent = JSON.parse(localStorage.getItem("auth")).user.email;
+      }
+    });
+
+  </script>
+</body>
+</html>
